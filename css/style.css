@@ -1,0 +1,165 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.title-bar {
+    background-color: #2c3e50;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.title-bar h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.main-area {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.canvas-container {
+    flex: 0 0 70%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.canvas-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    transition: opacity 200ms ease, visibility 200ms ease;
+}
+
+.canvas-wrapper canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.canvas-wrapper.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.control-panel {
+    flex: 0 0 30%;
+    background-color: #ecf0f1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-group .btn:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.btn-group .btn:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.btn-group .btn:only-child {
+    border-radius: 4px;
+}
+
+.btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #bdc3c7;
+    background-color: white;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.btn:not(:first-child) {
+    border-left: none;
+}
+
+.btn:hover {
+    background-color: #e0e4e8;
+}
+
+.btn.active {
+    background-color: #3498db;
+    color: white;
+    border-color: #3498db;
+    z-index: 1;
+}
+
+.section-label {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.color-preview-section {
+    margin-top: 0.5rem;
+}
+
+.color-preview {
+    width: 100%;
+    height: 100px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    background-color: #FF5733;
+}
+
+.color-values-section {
+    margin-top: 0.75rem;
+}
+
+.color-values {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.color-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.5rem;
+    background-color: white;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+}
+
+.value-label {
+    font-weight: 600;
+    color: #555;
+    min-width: 3rem;
+}
+
+@media (max-width: 768px) {
+    .main-area {
+        flex-direction: column;
+    }
+    
+    .canvas-container {
+        flex: 0 0 50%;
+    }
+    
+    .control-panel {
+        flex: 0 0 50%;
+    }
+}

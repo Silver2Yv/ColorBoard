@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式调色盘</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="title-bar">
+            <h1>交互式调色盘</h1>
+        </header>
+        <main class="main-area">
+            <div class="canvas-container">
+                <div id="display-area">
+                    <div id="canvas-2d" class="canvas-wrapper">
+                        <canvas id="canvas2d"></canvas>
+                    </div>
+                    <div id="canvas-3d" class="canvas-wrapper hidden">
+                        <canvas id="canvas3d"></canvas>
+                    </div>
+                </div>
+            </div>
+            <aside class="control-panel">
+                <div class="btn-group mode-toggle">
+                    <button class="btn active" id="btn-2d" data-mode="2d">2D</button>
+                    <button class="btn" id="btn-3d" data-mode="3d">3D</button>
+                </div>
+                <div class="btn-group space-toggle">
+                    <button class="btn active" id="btn-rgb" data-space="rgb">RGB</button>
+                    <button class="btn" id="btn-hsv" data-space="hsv">HSV</button>
+                    <button class="btn" id="btn-hsl" data-space="hsl">HSL</button>
+                </div>
+                <div class="color-preview-section">
+                    <h3 class="section-label">当前颜色</h3>
+                    <div class="color-preview" id="color-preview"></div>
+                </div>
+                <div class="color-values-section">
+                    <h3 class="section-label">颜色值</h3>
+                    <div class="color-values">
+                        <div class="color-value">
+                            <span class="value-label">HEX</span>
+                            <span id="val-hex">#FF5733</span>
+                        </div>
+                        <div class="color-value">
+                            <span class="value-label">RGB</span>
+                            <span id="val-rgb">255, 87, 51</span>
+                        </div>
+                        <div class="color-value">
+                            <span class="value-label">HSV</span>
+                            <span id="val-hsv">0, 80, 100</span>
+                        </div>
+                        <div class="color-value">
+                            <span class="value-label">HSL</span>
+                            <span id="val-hsl">0, 100, 50</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
