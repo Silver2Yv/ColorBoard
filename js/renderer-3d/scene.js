@@ -24,6 +24,11 @@ export class Scene3D {
         this.camera.position.set(1.5, 1.5, 1.5);
         this.camera.lookAt(0, 0, 0);
 
+        const existingCanvas = this._container.querySelector('canvas');
+        if (existingCanvas) {
+            this._container.removeChild(existingCanvas);
+        }
+
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: false,

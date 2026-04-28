@@ -76,8 +76,8 @@ export class HSLCone extends BaseColorMesh {
             s = Math.max(0, Math.min(100, s));
         }
 
-        const [r, g, b] = hslToRgb(h, s, l);
-        return { r, g, b };
+        const rgb = hslToRgb(h, s, l);
+        return { r: rgb.r, g: rgb.g, b: rgb.b };
     }
 
     onClick(mouseX, mouseY) {

@@ -135,7 +135,10 @@ export class Renderer2DBase {
      */
     clear() {
         const dpr = window.devicePixelRatio || 1;
-        this.ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+        const w = this.canvas.width / dpr;
+        const h = this.canvas.height / dpr;
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(0, 0, w, h);
     }
 
     /**

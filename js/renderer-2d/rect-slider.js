@@ -26,7 +26,11 @@ export class RectSlider extends Renderer2DBase {
 
         this._draggingArea = null;
 
-        this.unsubscribe = subscribe('color-change', () => this.render());
+        this.unsubscribe = subscribe('color-change', () => {
+            const state = getState();
+            if (state.mode !== '2d' || state.space !== this.space) return;
+            this.render();
+        });
 
         this.bindPointerEvents(
             this.onPointerDown.bind(this),
@@ -147,6 +151,9 @@ export class RectSlider extends Renderer2DBase {
     }
 
     onPointerDown(pos, evt) {
+        const state = getState();
+        if (state.mode !== '2d' || state.space !== this.space) return;
+
         const { rectW, sliderX } = this._getLayout();
         
         if (pos.x <= rectW + 5) {
@@ -163,6 +170,8 @@ export class RectSlider extends Renderer2DBase {
     }
 
     onPointerMove(pos, evt) {
+        const state = getState();
+        if (state.mode !== '2d' || state.space !== this.space) return;
         if (!this._draggingArea) return;
 
         const { h, rectW } = this._getLayout();

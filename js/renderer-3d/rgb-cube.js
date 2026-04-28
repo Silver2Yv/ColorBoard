@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BaseColorMesh } from './base-mesh.js';
-import { state } from '../state.js';
+import { setColor } from '../state.js';
 
 export class RGBCube extends BaseColorMesh {
     buildGeometry() {
@@ -29,7 +29,7 @@ export class RGBCube extends BaseColorMesh {
             const g = Math.round((localPoint.y + 0.5) * 255);
             const b = Math.round((localPoint.z + 0.5) * 255);
             
-            state.setColor({
+            setColor({
                 r: Math.max(0, Math.min(255, r)),
                 g: Math.max(0, Math.min(255, g)),
                 b: Math.max(0, Math.min(255, b))
