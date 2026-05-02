@@ -21,7 +21,7 @@
  *   - 3D 模式：隐藏当前网格 → 显示新空间网格 → 渲染场景
  */
 
-import { subscribe, getState } from './state.js';
+import { subscribe, getState, getCrossSection } from './state.js';
 import { RGBTriangle } from './renderer-2d/rgb-triangle.js';
 import { RectSlider } from './renderer-2d/rect-slider.js';
 import { ModeSwitch } from './ui/mode-switch.js';
