@@ -19,7 +19,36 @@
         <header class="title-bar">
             <h1>交互式调色盘</h1>
         </header>
-        <main class="main-area">
+        <main class="main-area layout-three-col">
+            <div id="cross-section-panel" class="hidden">
+                <div class="cross-section-header">
+                    <h3 class="section-label">剖面模式</h3>
+                    <button class="btn cross-section-toggle" type="button" aria-label="折叠剖面面板">折叠</button>
+                </div>
+                <div class="cross-section-controls">
+                    <div class="cross-section-control">
+                        <label for="cross-section-a" class="cross-section-label">参数 A</label>
+                        <div class="cross-section-input-row">
+                            <input id="cross-section-a" type="range" min="0" max="100" value="50">
+                            <input type="number" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                    <div class="cross-section-control">
+                        <label for="cross-section-b" class="cross-section-label">参数 B</label>
+                        <div class="cross-section-input-row">
+                            <input id="cross-section-b" type="range" min="0" max="100" value="50">
+                            <input type="number" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                    <div class="cross-section-control">
+                        <label for="cross-section-c" class="cross-section-label">参数 C</label>
+                        <div class="cross-section-input-row">
+                            <input id="cross-section-c" type="range" min="0" max="100" value="50">
+                            <input type="number" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="canvas-container">
                 <div id="display-area">
                     <div id="canvas-2d" class="canvas-wrapper">

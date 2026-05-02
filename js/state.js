@@ -8,13 +8,16 @@
  * - setColor(input)   — 从 RGB / HSV / HSL 更新颜色，自动同步所有空间
  * - setMode(mode)     — 切换 '2d' / '3d' 渲染模式
  * - setSpace(space)   — 切换 'rgb' / 'hsv' / 'hsl' 色彩空间
+ * - setCrossSection(input) — 更新剖面模式状态
  * - subscribe(event, callback) — 订阅事件，返回 unsubscribe 函数
  * - getState()        — 返回状态深拷贝
+ * - getCrossSection() — 返回剖面状态深拷贝
  *
  * ===== 事件 =====
  * - 'color-change'  — setColor 触发
  * - 'mode-change'   — setMode 触发
  * - 'space-change'  — setSpace 触发
+ * - 'cross-section-change' — setCrossSection 触发
  */
 
 import {
@@ -31,6 +34,12 @@ const _state = {
   color: { r: 0, g: 0, b: 0, h: 0, s: 0, v: 0, l: 0, hex: '#000000' },
   mode: '2d',
   space: 'rgb',
+  crossSection: {
+    enabled: false,
+    lockedAxis: null,
+    lockedValue: 0,
+    values: { x: 0, y: 0, z: 0 }
+  },
   ui: {
     selected2D: { x: 0, y: 0 },
     selected3D: { x: 0, y: 0, z: 0 }
@@ -43,7 +52,8 @@ const _state = {
 const _listeners = {
   'color-change': [],
   'mode-change': [],
-  'space-change': []
+  'space-change': [],
+  'cross-section-change': []
 };
 
 function emit(eventName) {
@@ -67,6 +77,24 @@ function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+/**
+ * 将剖面锁定轴映射到 RGB 分量名
+ * @param {'x'|'y'|'z'|null} axis
+ * @returns {'r'|'g'|'b'|null}
+ */
+function axisToChannel(axis) {
+  if (axis === 'x') {
+    return 'r';
+  }
+  if (axis === 'y') {
+    return 'g';
+  }
+  if (axis === 'z') {
+    return 'b';
+  }
+  return null;
+}
+
 // ============================================================
 // 初始化：默认颜色 #FF5733（r=255, g=87, b=51）
 // 计算对应的 HSV / HSL / HEX 并写入状态
@@ -83,6 +111,9 @@ function initDefault() {
   _state.color.v = roundInt(hsv.v);
   _state.color.l = roundInt(hsl.l);
   _state.color.hex = '#FF5733';
+  _state.crossSection.values.x = r;
+  _state.crossSection.values.y = g;
+  _state.crossSection.values.z = b;
 }
 
 initDefault();
@@ -152,6 +183,39 @@ function setColor(input) {
 
   }
 
+  const lockedAxis = _state.crossSection.enabled ? _state.crossSection.lockedAxis : null;
+  if (lockedAxis) {
+    const channel = axisToChannel(lockedAxis);
+    if (channel) {
+      const lockedValue = roundInt(_state.crossSection.lockedValue);
+      if (channel === 'r') {
+        r = lockedValue;
+      } else if (channel === 'g') {
+        g = lockedValue;
+      } else if (channel === 'b') {
+        b = lockedValue;
+      }
+
+      const hsv = rgbToHsv(r, g, b);
+      const hsl = rgbToHsl(r, g, b);
+      _state.color.r = r;
+      _state.color.g = g;
+      _state.color.b = b;
+      _state.color.h = roundInt(hsv.h);
+      _state.color.s = roundInt(hsv.s);
+      _state.color.v = roundInt(hsv.v);
+      _state.color.l = roundInt(hsl.l);
+      _state.color.hex = rgbToHex(r, g, b);
+      _state.crossSection.values.x = r;
+      _state.crossSection.values.y = g;
+      _state.crossSection.values.z = b;
+    }
+  }
+
+  _state.crossSection.values.x = _state.color.r;
+  _state.crossSection.values.y = _state.color.g;
+  _state.crossSection.values.z = _state.color.b;
+
   emit('color-change');
 }
 
@@ -181,6 +245,52 @@ function setSpace(space) {
     _state.space = space;
     emit('space-change');
   }
+}
+
+// ============================================================
+// setCrossSection：切换剖面模式状态
+// ============================================================
+
+/**
+ * @param {{enabled?:boolean,lockedAxis?:'x'|'y'|'z'|null,lockedValue?:number,values?:{x?:number,y?:number,z?:number}}} input
+ */
+function setCrossSection(input) {
+  const nextEnabled = typeof input.enabled === 'boolean' ? input.enabled : _state.crossSection.enabled;
+  const nextLockedAxis = Object.prototype.hasOwnProperty.call(input, 'lockedAxis')
+    ? input.lockedAxis
+    : _state.crossSection.lockedAxis;
+  const lockedAxisChanged = nextLockedAxis !== _state.crossSection.lockedAxis;
+
+  _state.crossSection.enabled = nextEnabled;
+  _state.crossSection.lockedAxis = nextLockedAxis;
+
+  if (input.values) {
+    if (typeof input.values.x === 'number') {
+      _state.crossSection.values.x = roundInt(input.values.x);
+    }
+    if (typeof input.values.y === 'number') {
+      _state.crossSection.values.y = roundInt(input.values.y);
+    }
+    if (typeof input.values.z === 'number') {
+      _state.crossSection.values.z = roundInt(input.values.z);
+    }
+  }
+
+  if (lockedAxisChanged) {
+    // 锁定轴变化时，自动重置 lockedValue 为当前颜色的对应分量
+    const channel = axisToChannel(nextLockedAxis);
+    _state.crossSection.lockedValue = channel ? _state.color[channel] : 0;
+  } else if (Object.prototype.hasOwnProperty.call(input, 'lockedValue')) {
+    _state.crossSection.lockedValue = roundInt(input.lockedValue);
+  }
+
+  if (!input.values) {
+    _state.crossSection.values.x = _state.color.r;
+    _state.crossSection.values.y = _state.color.g;
+    _state.crossSection.values.z = _state.color.b;
+  }
+
+  emit('cross-section-change');
 }
 
 // ============================================================
@@ -220,7 +330,15 @@ function getState() {
   return deepClone(_state);
 }
 
+/**
+ * 返回剖面状态的深拷贝
+ * @returns {Object}
+ */
+function getCrossSection() {
+  return deepClone(_state.crossSection);
+}
+
 // ============================================================
 // 导出公开 API
 // ============================================================
-export { setColor, setMode, setSpace, subscribe, getState };
+export { setColor, setMode, setSpace, setCrossSection, subscribe, getState, getCrossSection };

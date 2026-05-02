@@ -27,6 +27,10 @@ import { RectSlider } from './renderer-2d/rect-slider.js';
 import { ModeSwitch } from './ui/mode-switch.js';
 import { SpaceSwitch } from './ui/space-switch.js';
 import { ColorDisplay } from './ui/color-display.js';
+import { CrossSectionPanel } from './ui/cross-section-panel.js';
+import { RGBCrossSection } from './renderer-cross-section/rgb-section.js';
+import { HSVSectionRenderer } from './renderer-cross-section/hsv-section.js';
+import { HSLSectionRenderer } from './renderer-cross-section/hsl-section.js';
 
 // ============================================================
 // 私有状态（不暴露到全局作用域）
@@ -47,11 +51,17 @@ let _currentMesh3d = null;
 /** @type {boolean} 3D 模块是否已加载（含动态 import 完成的标志） */
 let _3dReady = false;
 
-/** @type {{Scene3D: Function, RGBCube: Function, HSVCylinder: Function, HSLCone: Function}|null} */
+/** @type {{Scene3D: Function, RGBCube: Function, HSVCylinder: Function, HSLCone: Function, CrossSectionPlane: Function}|null} */
 let _3dModules = null;
 
 /** @type {Promise|null} 正在进行的 3D 加载 Promise（防止并发重复加载） */
 let _3dLoadPromise = null;
+
+/** @type {CrossSectionRendererBase|null} 当前活跃的剖面 2D 渲染器 */
+let _crossSectionRenderer = null;
+
+/** @type {CrossSectionPlane|null} 3D 剖切平面 */
+let _crossSectionPlane = null;
 
 // ============================================================
 // 初始化入口
@@ -62,9 +72,11 @@ function init() {
     const modeSwitch = new ModeSwitch();
     const spaceSwitch = new SpaceSwitch();
     const colorDisplay = new ColorDisplay();
+    const crossSectionPanel = new CrossSectionPanel();
     modeSwitch.init();
     spaceSwitch.init();
     colorDisplay.init();
+    crossSectionPanel.init();
 
     // 2. 创建 2D 渲染器（三者共享 #canvas-2d 容器内的同一个 <canvas> 元素）
     //    注意：RectSlider 创建时不会立即渲染，等待空间切换时再显示
@@ -75,12 +87,21 @@ function init() {
     // 3. 默认状态：mode='2d' / space='rgb' — 渲染 RGB 三角
     _renderers2d.rgb.render();
 
-    // 4. 订阅状态事件
+    // 4. 追加剖面 canvas 容器（位于剖面面板控制区下方）
+    const csCanvasContainer = document.createElement('div');
+    csCanvasContainer.id = 'cross-section-canvas';
+    document.getElementById('cross-section-panel').appendChild(csCanvasContainer);
+
+    // 5. 订阅状态事件
     subscribe('mode-change', _onModeChange);
     subscribe('space-change', _onSpaceChange);
     subscribe('color-change', _onColorChange);
+    subscribe('cross-section-change', _onCrossSectionChange);
 
-    // 5. 窗口尺寸变化处理
+    // 6. 初始状态同步：2D 模式隐藏剖面面板
+    _syncCrossSectionVisibility();
+
+    // 7. 窗口尺寸变化处理
     window.addEventListener('resize', _onWindowResize);
 }
 
@@ -103,12 +124,14 @@ function _load3DModules() {
             sceneModule,
             cubeModule,
             cylinderModule,
-            coneModule
+            coneModule,
+            crossSectionPlaneModule
         ] = await Promise.all([
             import('./renderer-3d/scene.js'),
             import('./renderer-3d/rgb-cube.js'),
             import('./renderer-3d/hsv-cylinder.js'),
-            import('./renderer-3d/hsl-cone.js')
+            import('./renderer-3d/hsl-cone.js'),
+            import('./renderer-3d/cross-section-plane.js')
         ]);
 
         // 确认加载期间未切回 2D
@@ -121,7 +144,8 @@ function _load3DModules() {
             Scene3D: sceneModule.Scene3D,
             RGBCube: cubeModule.RGBCube,
             HSVCylinder: cylinderModule.HSVCylinder,
-            HSLCone: coneModule.HSLCone
+            HSLCone: coneModule.HSLCone,
+            CrossSectionPlane: crossSectionPlaneModule.CrossSectionPlane
         };
 
         _3dReady = true;
@@ -142,6 +166,15 @@ function _initScene3D() {
     // 创建当前色彩空间对应的 3D 网格
     const { space } = getState();
     _createMesh3D(space);
+
+    // 创建剖切平面（初始隐藏）
+    _crossSectionPlane = new _3dModules.CrossSectionPlane(_scene3d, space);
+
+    // 创建当前空间对应的剖面 2D 渲染器
+    _createCrossSectionRenderer(space);
+
+    // 同步当前剖面状态
+    _showCrossSectionIn3D();
 
     _scene3d.render();
 }
@@ -223,6 +256,9 @@ function _onModeChange() {
     const { mode, space } = getState();
 
     if (mode === '3d') {
+        // 显示剖面面板
+        _syncCrossSectionVisibility();
+
         if (!_3dReady) {
             // 首次进入 3D：启动懒加载
             _load3DModules().then(() => {
@@ -233,8 +269,13 @@ function _onModeChange() {
         } else {
             // 已加载，刷新场景渲染
             _scene3d?.render();
+            // 同步显示剖面渲染器和剖切平面
+            _showCrossSectionIn3D();
         }
     } else if (mode === '2d') {
+        // 隐藏剖面面板
+        _syncCrossSectionVisibility();
+
         // 切换回 2D：确保活跃渲染器覆盖共享 canvas
         // （ModeSwitch._sync 已处理容器可见性）
         _renderers2d[space]?.render();
@@ -256,6 +297,26 @@ function _onSpaceChange() {
         _renderers2d[space]?.render();
     } else if (mode === '3d') {
         _switchMesh3D(space);
+
+        // 切换色彩空间时：重新创建剖面 2D 渲染器、更新剖切平面空间类型
+        if (_crossSectionPlane) {
+            _crossSectionPlane.space = space;
+        }
+        _createCrossSectionRenderer(space);
+
+        const crossSection = getCrossSection();
+        if (crossSection.enabled && crossSection.lockedAxis) {
+            if (_crossSectionRenderer) {
+                _crossSectionRenderer.renderCrossSection(
+                    crossSection.lockedAxis,
+                    crossSection.lockedValue,
+                    space
+                );
+            }
+            if (_crossSectionPlane) {
+                _crossSectionPlane.show(crossSection.lockedAxis, crossSection.lockedValue);
+            }
+        }
     }
 }
 
@@ -274,6 +335,49 @@ function _onColorChange() {
         _renderers2d[space]?.render();
     } else if (mode === '3d' && _scene3d) {
         _scene3d.render();
+
+        // 更新剖面渲染器的选中标记
+        const crossSection = getCrossSection();
+        if (crossSection.enabled && crossSection.lockedAxis && _crossSectionRenderer) {
+            _crossSectionRenderer.renderCrossSection(
+                crossSection.lockedAxis,
+                crossSection.lockedValue,
+                space
+            );
+        }
+    }
+}
+
+/**
+ * 剖切面变更事件：同步剖面 2D 渲染器和 3D 剖切平面
+ *
+ * - lockedAxis 为 null（禁用剖面时）：隐藏 3D 平面
+ * - lockedAxis 已设置：显示并更新位置
+ */
+function _onCrossSectionChange() {
+    const crossSection = getCrossSection();
+    const { mode, space } = getState();
+
+    if (mode !== '3d') return;
+
+    if (crossSection.enabled && crossSection.lockedAxis) {
+        // 更新剖面 2D 渲染器
+        if (_crossSectionRenderer) {
+            _crossSectionRenderer.renderCrossSection(
+                crossSection.lockedAxis,
+                crossSection.lockedValue,
+                space
+            );
+        }
+        // 显示并更新 3D 剖切平面
+        if (_crossSectionPlane) {
+            _crossSectionPlane.show(crossSection.lockedAxis, crossSection.lockedValue);
+        }
+    } else {
+        // 禁用剖面时隐藏 3D 剖切平面
+        if (_crossSectionPlane) {
+            _crossSectionPlane.hide();
+        }
     }
 }
 
@@ -285,6 +389,77 @@ function _onColorChange() {
 function _on3DClick(evt) {
     if (_currentMesh3d && typeof _currentMesh3d.onClick === 'function') {
         _currentMesh3d.onClick(evt.clientX, evt.clientY);
+    }
+}
+
+// ============================================================
+// 剖面模式辅助函数
+// ============================================================
+
+/**
+ * 根据当前色彩空间创建或切换剖面 2D 渲染器
+ * 销毁旧的渲染器，创建当前空间对应的新渲染器
+ *
+ * @param {'rgb'|'hsv'|'hsl'} space
+ */
+function _createCrossSectionRenderer(space) {
+    _destroyCrossSectionRenderer();
+
+    const containerId = 'cross-section-canvas';
+    if (!document.getElementById(containerId)) return;
+
+    switch (space) {
+        case 'rgb':
+            _crossSectionRenderer = new RGBCrossSection(containerId);
+            break;
+        case 'hsv':
+            _crossSectionRenderer = new HSVSectionRenderer(containerId);
+            break;
+        case 'hsl':
+            _crossSectionRenderer = new HSLSectionRenderer(containerId);
+            break;
+    }
+}
+
+/**
+ * 销毁当前剖面 2D 渲染器，释放 canvas 和事件监听
+ */
+function _destroyCrossSectionRenderer() {
+    if (_crossSectionRenderer) {
+        _crossSectionRenderer.destroy();
+        _crossSectionRenderer = null;
+    }
+}
+
+/**
+ * 在 3D 模式下同步显示剖面渲染器和剖切平面
+ * 剖面面板已在外部显示，此处负责绘制内容
+ */
+function _showCrossSectionIn3D() {
+    const crossSection = getCrossSection();
+    const { space } = getState();
+
+    if (!_crossSectionRenderer || !_crossSectionPlane) return;
+
+    if (crossSection.enabled && crossSection.lockedAxis) {
+        _crossSectionRenderer.renderCrossSection(
+            crossSection.lockedAxis,
+            crossSection.lockedValue,
+            space
+        );
+        _crossSectionPlane.show(crossSection.lockedAxis, crossSection.lockedValue);
+    }
+}
+
+/**
+ * 根据当前模式显示/隐藏 #cross-section-panel
+ * 2D 模式隐藏，3D 模式显示
+ */
+function _syncCrossSectionVisibility() {
+    const { mode } = getState();
+    const panel = document.getElementById('cross-section-panel');
+    if (panel) {
+        panel.classList.toggle('hidden', mode === '2d');
     }
 }
 

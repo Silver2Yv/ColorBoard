@@ -34,7 +34,7 @@ export class RGBTriangle extends Renderer2DBase {
         const h = this.container.clientHeight;
         const cx = w / 2;
         const cy = h / 2;
-        const size = Math.min(w, h) * 0.45;
+        const size = Math.min(w, h) * 0.48;
         
         const cos30 = Math.cos(Math.PI / 6);
         const sin30 = Math.sin(Math.PI / 6);
