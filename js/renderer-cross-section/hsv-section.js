@@ -51,7 +51,7 @@ export class HSVSectionRenderer extends CrossSectionRendererBase {
                 s = ny * 100;
             }
             
-            state.setColor('hsv', { h, s, v });
+            state.setColor({ h, s, v });
         };
         
         this.bindPointerEvents(handlePointer, handlePointer);
@@ -130,19 +130,19 @@ export class HSVSectionRenderer extends CrossSectionRendererBase {
         this.ctx.drawImage(this._offscreenCanvas, 0, 0, RENDER_SIZE, RENDER_SIZE, 0, 0, cw, ch);
         
         const currentState = state.getState();
-        const currentHsv = currentState.hsv;
-        
+        const currentColor = currentState.color;
+
         let markerX = 0, markerY = 0;
-        
+
         if (lockedAxis === 'h') {
-            markerX = (currentHsv.s / 100) * cw;
-            markerY = (1 - (currentHsv.v / 100)) * ch;
+            markerX = (currentColor.s / 100) * cw;
+            markerY = (1 - (currentColor.v / 100)) * ch;
         } else if (lockedAxis === 's') {
-            markerX = (currentHsv.h / 360) * cw;
-            markerY = (1 - (currentHsv.v / 100)) * ch;
+            markerX = (currentColor.h / 360) * cw;
+            markerY = (1 - (currentColor.v / 100)) * ch;
         } else if (lockedAxis === 'v') {
-            markerX = (currentHsv.h / 360) * cw;
-            markerY = (1 - (currentHsv.s / 100)) * ch;
+            markerX = (currentColor.h / 360) * cw;
+            markerY = (1 - (currentColor.s / 100)) * ch;
         }
         
         this.drawMarker(markerX, markerY);

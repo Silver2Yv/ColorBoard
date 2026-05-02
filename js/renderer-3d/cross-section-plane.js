@@ -84,6 +84,25 @@ export class CrossSectionPlane {
                 // B 锁定：创建 XY 平面（默认）
                 this.mesh.position.z = pos;
             }
+        } else if (this.space === 'hsv' || this.space === 'hsl') {
+            // HSV/HSL 使用归一化边界框映射（圆柱/圆锥的近似示意）
+            // 统一将各轴归一化到 0-1 再映射到 -0.5 ~ 0.5
+            let norm = 0;
+            if (lockedAxis === 'h') {
+                norm = lockedValue / 360;
+                const pos = norm - 0.5;
+                this.mesh.rotation.y = Math.PI / 2;
+                this.mesh.position.x = pos;
+            } else if (lockedAxis === 's') {
+                norm = lockedValue / 100;
+                const pos = norm - 0.5;
+                this.mesh.rotation.x = Math.PI / 2;
+                this.mesh.position.y = pos;
+            } else if (lockedAxis === 'v' || lockedAxis === 'l') {
+                norm = lockedValue / 100;
+                const pos = norm - 0.5;
+                this.mesh.position.z = pos;
+            }
         }
 
         this.scene3d.render();
