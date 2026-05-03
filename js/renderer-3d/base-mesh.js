@@ -10,6 +10,18 @@ export class BaseColorMesh {
         this.material = new THREE.MeshBasicMaterial({ vertexColors: true });
         
         this.mesh = new THREE.Mesh(this.geometry, this.material);
+
+        this.crossSectionPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.5, 1.5),
+            new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            })
+        );
+        this.crossSectionPlane.rotation.x = -Math.PI / 2;
+        this.crossSectionPlane.visible = false;
     }
 
     buildGeometry() {
@@ -37,6 +49,10 @@ export class BaseColorMesh {
         if (this.mesh) {
             this.scene3d.add(this.mesh);
         }
+        if (this.crossSectionPlane) {
+            this.scene3d.add(this.crossSectionPlane);
+            this.crossSectionPlane.visible = true;
+        }
         if (this.highlightSphere) {
             this.scene3d.add(this.highlightSphere);
         }
@@ -46,6 +62,10 @@ export class BaseColorMesh {
     hide() {
         if (this.mesh) {
             this.scene3d.remove(this.mesh);
+        }
+        if (this.crossSectionPlane) {
+            this.scene3d.remove(this.crossSectionPlane);
+            this.crossSectionPlane.visible = false;
         }
         if (this.highlightSphere) {
             this.scene3d.remove(this.highlightSphere);
@@ -65,6 +85,12 @@ export class BaseColorMesh {
         }
         if (this.mesh) {
             this.mesh = null;
+        }
+        
+        if (this.crossSectionPlane) {
+            this.crossSectionPlane.geometry.dispose();
+            this.crossSectionPlane.material.dispose();
+            this.crossSectionPlane = null;
         }
         
         if (this.highlightSphere) {

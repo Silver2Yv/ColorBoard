@@ -164,8 +164,11 @@ function _initScene3D() {
     _scene3d.renderer.domElement.addEventListener('pointerdown', _on3DClick);
 
     // 创建当前色彩空间对应的 3D 网格
-    const { space } = getState();
+    const { space, color } = getState();
     _createMesh3D(space);
+    if (_currentMesh3d && typeof _currentMesh3d.updateCrossSection === 'function') {
+        _currentMesh3d.updateCrossSection(color);
+    }
 
     // 创建剖切平面（初始隐藏）
     _crossSectionPlane = new _3dModules.CrossSectionPlane(_scene3d, space);
@@ -237,6 +240,10 @@ function _switchMesh3D(space) {
     }
 
     _currentMesh3d = _meshes3d[space];
+    const { color } = getState();
+    if (_currentMesh3d && typeof _currentMesh3d.updateCrossSection === 'function') {
+        _currentMesh3d.updateCrossSection(color);
+    }
     _scene3d.render();
 }
 
@@ -328,12 +335,15 @@ function _onSpaceChange() {
  * 3D 模式下仅刷新场景渲染。
  */
 function _onColorChange() {
-    const { mode, space } = getState();
+    const { mode, space, color } = getState();
 
     if (mode === '2d') {
         // 活跃渲染器最后渲染，确保在共享 canvas 上可见
         _renderers2d[space]?.render();
     } else if (mode === '3d' && _scene3d) {
+        if (_currentMesh3d && typeof _currentMesh3d.updateCrossSection === 'function') {
+            _currentMesh3d.updateCrossSection(color);
+        }
         _scene3d.render();
 
         // 更新剖面渲染器的选中标记
@@ -458,8 +468,13 @@ function _showCrossSectionIn3D() {
 function _syncCrossSectionVisibility() {
     const { mode } = getState();
     const panel = document.getElementById('cross-section-panel');
+    const mainArea = document.querySelector('.main-area');
     if (panel) {
         panel.classList.toggle('hidden', mode === '2d');
+    }
+    if (mainArea) {
+        mainArea.classList.toggle('layout-three-col', mode === '3d');
+        mainArea.classList.toggle('layout-two-col', mode === '2d');
     }
 }
 

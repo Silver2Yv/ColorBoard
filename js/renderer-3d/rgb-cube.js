@@ -42,4 +42,11 @@ export class RGBCube extends BaseColorMesh {
         
         return null;
     }
+
+    updateCrossSection(color) {
+        if (this.crossSectionPlane) {
+            // RGB 立方体中 Y 轴映射到绿色分量
+            this.crossSectionPlane.position.y = (color.g / 255) - 0.5;
+        }
+    }
 }

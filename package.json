@@ -1,4 +1,13 @@
 {
   "type": "module",
-  "private": true
+  "private": true,
+  "scripts": {
+    "dev": "serve . -p 3000",
+    "build": "mkdir -p dist && cp -r css js index.html dist/",
+    "start": "serve dist -p 3000"
+  },
+  "dependencies": {
+    "playwright": "^1.59.1",
+    "serve": "^14.2.1"
+  }
 }

@@ -1,3 +1,5 @@
+import { getState } from '../state.js';
+
 /**
  * 2D 渲染器基类
  *
@@ -72,7 +74,17 @@ export class Renderer2DBase {
      */
     resize() {
         this._updateSize();
-        this.render();
+        const state = getState();
+        // 仅在 2D 模式下且渲染器匹配当前色彩空间时才重绘
+        if (state.mode === '2d') {
+            if (this.hasOwnProperty('space') && this.space !== state.space) {
+                return;
+            }
+            if (this.constructor.name === 'RGBTriangle' && state.space !== 'rgb') {
+                return;
+            }
+            this.render();
+        }
     }
 
     /**

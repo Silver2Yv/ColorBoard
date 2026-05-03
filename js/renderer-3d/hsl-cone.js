@@ -108,4 +108,11 @@ export class HSLCone extends BaseColorMesh {
 
         return { h, s, l };
     }
+
+    updateCrossSection(color) {
+        if (this.crossSectionPlane) {
+            // L 范围 0-100，映射到 y: -0.5 到 0.5
+            this.crossSectionPlane.position.y = (color.l / 100) - 0.5;
+        }
+    }
 }

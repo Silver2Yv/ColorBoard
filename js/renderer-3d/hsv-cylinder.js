@@ -65,4 +65,11 @@ export class HSVCylinder extends BaseColorMesh {
         
         return null;
     }
+
+    updateCrossSection(color) {
+        if (this.crossSectionPlane) {
+            // V 范围 0-100，映射到 y: -0.5 到 0.5
+            this.crossSectionPlane.position.y = (color.v / 100) - 0.5;
+        }
+    }
 }
