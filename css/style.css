@@ -52,6 +52,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
 }
 
 #cross-section-panel {
@@ -65,6 +66,9 @@ body {
     flex-direction: column;
     gap: 1rem;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
 }
 
 #cross-section-panel.hidden {

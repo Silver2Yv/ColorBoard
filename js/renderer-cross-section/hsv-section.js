@@ -37,15 +37,15 @@ export class HSVSectionRenderer extends CrossSectionRendererBase {
             const ny = Math.max(0, Math.min(1, 1 - (pos.y / ch)));
 
             let h = 0, s = 0, v = 0;
-            if (lockedAxis === 'h') {
+            if (lockedAxis === 'x') {
                 h = lockedValue;
                 s = nx * 100;
                 v = ny * 100;
-            } else if (lockedAxis === 's') {
+            } else if (lockedAxis === 'y') {
                 s = lockedValue;
                 h = nx * 360;
                 v = ny * 100;
-            } else if (lockedAxis === 'v') {
+            } else if (lockedAxis === 'z') {
                 v = lockedValue;
                 h = nx * 360;
                 s = ny * 100;
@@ -76,15 +76,15 @@ export class HSVSectionRenderer extends CrossSectionRendererBase {
                 const nx = x / (RENDER_SIZE - 1);
 
                 let h = 0, s = 0, v = 0;
-                if (lockedAxis === 'h') {
+                if (lockedAxis === 'x') {
                     h = lockedValue;
                     s = nx * 100;
                     v = ny * 100;
-                } else if (lockedAxis === 's') {
+                } else if (lockedAxis === 'y') {
                     s = lockedValue;
                     h = nx * 360;
                     v = ny * 100;
-                } else if (lockedAxis === 'v') {
+                } else if (lockedAxis === 'z') {
                     v = lockedValue;
                     h = nx * 360;
                     s = ny * 100;
@@ -134,13 +134,13 @@ export class HSVSectionRenderer extends CrossSectionRendererBase {
 
         let markerX = 0, markerY = 0;
 
-        if (lockedAxis === 'h') {
+        if (lockedAxis === 'x') {
             markerX = (currentColor.s / 100) * cw;
             markerY = (1 - (currentColor.v / 100)) * ch;
-        } else if (lockedAxis === 's') {
+        } else if (lockedAxis === 'y') {
             markerX = (currentColor.h / 360) * cw;
             markerY = (1 - (currentColor.v / 100)) * ch;
-        } else if (lockedAxis === 'v') {
+        } else if (lockedAxis === 'z') {
             markerX = (currentColor.h / 360) * cw;
             markerY = (1 - (currentColor.s / 100)) * ch;
         }
